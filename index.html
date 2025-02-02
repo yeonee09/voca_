@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>중3 영어 단어장</title>
+    <style>
+        body {
+            background-color: #ffe6f2;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        h1, h2 {
+            color: #ff69b4;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .word-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            padding: 10px;
+            border: 2px solid #ffb6c1;
+            border-radius: 5px;
+            flex: 1;
+        }
+
+        button {
+            background-color: #ff69b4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #ff1493;
+        }
+
+        .word-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .word-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin: 10px 0;
+            background-color: #fff0f5;
+            border-radius: 5px;
+            transition: transform 0.2s;
+        }
+
+        .word-item:hover {
+            transform: translateX(5px);
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #fff5f8;
+            border-radius: 10px;
+        }
+
+        .recommended-words {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 10px;
+        }
+
+        .next-words {
+            display: block;
+            margin: 20px auto;
+        }
+
+        .review-popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            z-index: 1000;
+            text-align: center;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+
+        .review-word {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌸 중3 영어 단어장 🌸</h1>
+
+        <div class="section">
+            <h2>나만의 단어 추가하기</h2>
+            <div class="word-form">
+                <input type="text" id="englishWord" placeholder="영어 단어" required>
+                <input type="text" id="koreanWord" placeholder="한글 뜻" required>
+                <button onclick="addCustomWord()">추가하기</button>
+            </div>
+            <ul class="word-list" id="customWordList"></ul>
+        </div>
+
+        <div class="section">
+            <h2>오늘의 추천 단어</h2>
+            <div class="recommended-words" id="recommendedWords"></div>
+            <button class="next-words" onclick="showNextWords()">다음 단어 보기</button>
+        </div>
+    </div>
+
+    <div class="review-popup" id="reviewPopup">
+        <h2>복습할 단어</h2>
+        <div class="review-word" id="reviewWord"></div>
+    </div>
+    <div class="overlay" id="overlay"></div>
+
+    <script>
+        // 전역 변수 초기화
+        let currentWordIndex = 0;
+        let customWords = [];
+
+        // localStorage 사용 가능 여부 확인
+        function isLocalStorageAvailable() {
+            try {
+                localStorage.setItem('test', 'test');
+                localStorage.removeItem('test');
+                return true;
+            } catch(e) {
+                return false;
+            }
+        }
+
+        // 데이터 저장
+        function saveData() {
+            if (isLocalStorageAvailable()) {
+                localStorage.setItem('vocabularyWords', JSON.stringify(customWords));
+            }
+        }
+
+        // 데이터 불러오기
+        function loadData() {
+            if (isLocalStorageAvailable()) {
+                const saved = localStorage.getItem('vocabularyWords');
+                if (saved) {
+                    customWords = JSON.parse(saved);
+                }
+            }
+        }
+
+        // 중3 추천 단어 목록
+        const recommendedWordsList = [
+            { english: "achieve", korean: "성취하다" },
+            { english: "consider", korean: "고려하다" },
+            { english: "develop", korean: "발전시키다" },
+            { english: "environment", korean: "환경" },
+            { english: "government", korean: "정부" },
+            { english: "however", korean: "그러나" },
+            { english: "increase", korean: "증가하다" },
+            { english: "necessary", korean: "필요한" },
+            { english: "population", korean: "인구" },
+            { english: "technology", korean: "기술" },
+            { english: "advantage", korean: "이점" },
+            { english: "business", korean: "사업" },
+            { english: "culture", korean: "문화" },
+            { english: "education", korean: "교육" },
+            { english: "experience", korean: "경험" },
+            { english: "foreign", korean: "외국의" },
+            { english: "information", korean: "정보" },
+            { english: "knowledge", korean: "지식" },
+            { english: "method", korean: "방법" },
+            { english: "practice", korean: "연습하다" },
+        ];
+
+        // 복습 팝업 표시
+        function showReviewPopup(word) {
+            const popup = document.getElementById('reviewPopup');
+            const overlay = document.getElementById('overlay');
+            const reviewWord = document.getElementById('reviewWord');
+
+            reviewWord.textContent = `${word.english} - ${word.korean}`;
+            popup.style.display = 'block';
+            overlay.style.display = 'block';
+
+            setTimeout(() => {
+                popup.style.display = 'none';
+                overlay.style.display = 'none';
+            }, 3000);
+        }
+
+        // 복습 체크
+        function checkForReview() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+
+            if (hours === 8 && minutes === 0) {
+                const yesterday = new Date(now);
+                yesterday.setDate(yesterday.getDate() - 1);
+                yesterday = yesterday.toDateString();
+
+                const wordsToReview = customWords.filter(word => {
+                    const wordDate = new Date(word.date).toDateString();
+                    return wordDate === yesterday && !word.reviewed;
+                });
+
+                wordsToReview.forEach((word, index) => {
+                    setTimeout(() => {
+                        showReviewPopup(word);
+                        word.reviewed = true;
+                    }, index * 3500);
+                });
+
+                saveData();
+            }
+        }
+
+        // 사용자 정의 단어 추가
+        function addCustomWord() {
+            const english = document.getElementById('englishWord').value.trim();
+            const korean = document.getElementById('koreanWord').value.trim();
+
+            if (english && korean) {
+                const newWord = {
+                    english,
+                    korean,
+                    date: new Date().toISOString(),
+                    reviewed: false
+                };
+
+                customWords.push(newWord);
+                saveData();
+                renderCustomWords();
+
+                // 입력 필드 초기화
+                document.getElementById('englishWord').value = '';
+                document.getElementById('koreanWord').value = '';
+            }
+        }
+
+        // 단어 삭제
+        function deleteCustomWord(index) {
+            customWords.splice(index, 1);
+            saveData();
+            renderCustomWords();
+        }
+
+        // 사용자 정의 단어 목록 표시
+        function renderCustomWords() {
+            const wordList = document.getElementById('customWordList');
+            wordList.innerHTML = '';
+
+            customWords.forEach((word, index) => {
+                const li = document.createElement('li');
+                li.className = 'word-item';
+                li.innerHTML = `
+                    <span>${word.english} - ${word.korean}</span>
+                    <button onclick="deleteCustomWord(${index})">삭제</button>
+                `;
+                wordList.appendChild(li);
+            });
+        }
+
+        // 추천 단어 표시
+        function showRecommendedWords() {
+            const container = document.getElementById('recommendedWords');
+            container.innerHTML = '';
+
+            for (let i = 0; i < 10; i++) {
+                const wordIndex = (currentWordIndex + i) % recommendedWordsList.length;
+                const word = recommendedWordsList[wordIndex];
+
+                const wordElement = document.createElement('div');
+                wordElement.className = 'word-item';
+                wordElement.innerHTML = `
+                    <span>${word.english} - ${word.korean}</span>
+                    <button onclick="addToCustomWords(${wordIndex})">추가하기</button>
+                `;
+                container.appendChild(wordElement);
+            }
+        }
+
+        // 다음 추천 단어 세트 보기
+        function showNextWords() {
+            currentWordIndex = (currentWordIndex + 10) % recommendedWordsList.length;
+            showRecommendedWords();
+        }
+
+        // 추천 단어를 사용자 단어장에 추가
+        function addToCustomWords(index) {
+            const word = recommendedWordsList[index];
+            customWords.push({
+                english: word.english,
+                korean: word.korean,
+                date: new Date().toISOString(),
+                reviewed: false
+            });
+            saveData();
+            renderCustomWords();
+        }
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            renderCustomWords();
+            showRecommendedWords();
+
+            // 1분마다 복습 체크
+            setInterval(checkForReview, 60000);
+        });
+    </script>
+</body>
+</html>
+
+
+<script src="https://ads-partners.coupang.com/g.js"></script>
+<script>
+    new PartnersCoupang.G({"id":829291,"trackingCode":"AF0428316","subId":null,"template":"carousel","width":"680","height":"140"});
+</script>
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>쿠팡 파트너스 배너</title>
+    <style>
+        .banner-container {
+            max-width: 100%;
+            margin: 20px 0 0 0;
+            padding: 15px 20px;
+            background: linear-gradient(to right, #FF9E3D, #FF6F61);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .coupang-logo {
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+
+        .banner-text {
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.4;
+            margin: 0;
+        }
+
+        @media (max-width: 480px) {
+            .banner-container {
+                margin: 15px 0 0 0;
+                padding: 12px 15px;
+            }
+
+            .banner-text {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="banner-container">
+        <svg class="coupang-logo" viewBox="0 0 24 24">
+            <path d="M12,2C6.48,2,2,6.48,2,12c0,5.52,4.48,10,10,10s10-4.48,10-10C22,6.48,17.52,2,12,2z M12,20c-4.41,0-8-3.59-8-8 c0-4.41,3.59-8,8-8s8,3.59,8,8C20,16.41,16.41,20,12,20z M11,7h2v6h-2V7z M11,15h2v2h-2V15z" fill="white"/>
+        </svg>
+        <p class="banner-text">이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</p>
+    </div>
+</body>
+</html>
